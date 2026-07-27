@@ -27,3 +27,15 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.sidebar)
         layout.addWidget(self.workspace)
+
+        # ==========================
+        # Kết nối các nút Sidebar
+        # ==========================
+
+        self.sidebar.create.clicked.connect(
+            self.workspace.import_image
+        )
+
+        self.sidebar.remove_bg_btn.clicked.connect(
+            self.workspace.remove_background
+        )

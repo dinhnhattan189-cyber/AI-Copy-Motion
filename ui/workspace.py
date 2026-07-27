@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -8,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from ui.preview_widget import PreviewWidget
+from core.remove_bg import remove_background as ai_remove_background
 
 
 class Workspace(QWidget):
@@ -29,12 +32,12 @@ class Workspace(QWidget):
 
         layout.addWidget(title)
 
-        # ===== Preview =====
+        # ================= Preview =================
 
         self.preview_widget = PreviewWidget()
         layout.addWidget(self.preview_widget)
 
-        # ===== Buttons =====
+        # ================= Buttons =================
 
         row = QHBoxLayout()
 
@@ -63,6 +66,8 @@ class Workspace(QWidget):
 
         layout.addLayout(row)
 
+        # ================= Generate =================
+
         self.btnGenerate = QPushButton("Generate Video")
 
         self.btnGenerate.setMinimumHeight(60)
@@ -88,13 +93,14 @@ class Workspace(QWidget):
             background:#181818;
         """)
 
-        # ===== Signals =====
+        # ================= Signals =================
 
         self.btnImage.clicked.connect(self.import_image)
 
-    # ======================================================
+    # =====================================================
 
     def import_image(self):
+
         file_name, _ = QFileDialog.getOpenFileName(
             self,
             "Open Image",
@@ -109,11 +115,28 @@ class Workspace(QWidget):
 
         self.preview_widget.show_image(file_name)
 
-    # ======================================================
+    # =====================================================
 
     def remove_background(self):
+
         if self.current_image is None:
             print("Chưa chọn ảnh.")
             return
 
-        print("Remove background:", self.current_image)
+        os.makedirs("outputs", exist_ok=True)
+
+        output_path = os.path.join(
+            "outputs",
+            "remove_bg.png"
+        )
+
+        ai_remove_background(
+            self.current_image,
+            output_path
+        )
+
+        self.current_image = output_path
+
+        self.preview_widget.show_image(output_path)
+
+        print("Đã xóa nền thành công!")

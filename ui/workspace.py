@@ -1,5 +1,3 @@
-import os
-
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -7,10 +5,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QFileDialog,
+    QMessageBox,
 )
 
 from ui.preview_widget import PreviewWidget
-from core.remove_bg import remove_background as ai_remove_background
+from core.motion import MotionEngine
 
 
 class Workspace(QWidget):
@@ -18,6 +17,7 @@ class Workspace(QWidget):
         super().__init__()
 
         self.current_image = None
+        self.motion_engine = MotionEngine()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -29,16 +29,13 @@ class Workspace(QWidget):
             font-weight:bold;
             color:white;
         """)
-
         layout.addWidget(title)
 
-        # ================= Preview =================
-
+        # Preview
         self.preview_widget = PreviewWidget()
         layout.addWidget(self.preview_widget)
 
-        # ================= Buttons =================
-
+        # Buttons
         row = QHBoxLayout()
 
         self.btnImage = QPushButton("📷 Character")
@@ -47,7 +44,6 @@ class Workspace(QWidget):
 
         for b in [self.btnImage, self.btnVideo, self.btnBg]:
             b.setMinimumHeight(50)
-
             b.setStyleSheet("""
                 QPushButton{
                     background:#3b82f6;
@@ -56,22 +52,16 @@ class Workspace(QWidget):
                     border-radius:10px;
                     font-size:15px;
                 }
-
                 QPushButton:hover{
                     background:#2563eb;
                 }
             """)
-
             row.addWidget(b)
 
         layout.addLayout(row)
 
-        # ================= Generate =================
-
         self.btnGenerate = QPushButton("Generate Video")
-
         self.btnGenerate.setMinimumHeight(60)
-
         self.btnGenerate.setStyleSheet("""
             QPushButton{
                 background:#10b981;
@@ -81,26 +71,21 @@ class Workspace(QWidget):
                 font-size:18px;
                 font-weight:bold;
             }
-
             QPushButton:hover{
                 background:#059669;
             }
         """)
-
         layout.addWidget(self.btnGenerate)
 
         self.setStyleSheet("""
             background:#181818;
         """)
 
-        # ================= Signals =================
-
+        # Signals
         self.btnImage.clicked.connect(self.import_image)
-
-    # =====================================================
+        self.btnGenerate.clicked.connect(self.generate_video)
 
     def import_image(self):
-
         file_name, _ = QFileDialog.getOpenFileName(
             self,
             "Open Image",
@@ -112,31 +97,24 @@ class Workspace(QWidget):
             return
 
         self.current_image = file_name
-
         self.preview_widget.show_image(file_name)
 
-    # =====================================================
-
     def remove_background(self):
-
         if self.current_image is None:
-            print("Chưa chọn ảnh.")
+            QMessageBox.warning(self, "Warning", "Chưa chọn ảnh.")
             return
 
-        os.makedirs("outputs", exist_ok=True)
+        print("Remove background:", self.current_image)
 
-        output_path = os.path.join(
-            "outputs",
-            "remove_bg.png"
+    def generate_video(self):
+        if self.current_image is None:
+            QMessageBox.warning(self, "Warning", "Vui lòng chọn ảnh trước.")
+            return
+
+        output = self.motion_engine.create_motion(self.current_image)
+
+        QMessageBox.information(
+            self,
+            "Hoàn thành",
+            f"Video đã được tạo:\n\n{output}"
         )
-
-        ai_remove_background(
-            self.current_image,
-            output_path
-        )
-
-        self.current_image = output_path
-
-        self.preview_widget.show_image(output_path)
-
-        print("Đã xóa nền thành công!")
